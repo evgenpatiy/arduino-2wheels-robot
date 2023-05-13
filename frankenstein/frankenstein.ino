@@ -52,6 +52,8 @@ void initSerialConsole() {
 void setup() {
   initSerialConsole();
 
+  pinMode(LED_BUILTIN, OUTPUT);
+  
   pinMode(RightMotorForward, OUTPUT);
   pinMode(LeftMotorForward, OUTPUT);
   pinMode(LeftMotorBackward, OUTPUT);
@@ -96,9 +98,31 @@ void loop() {
                 break;
           }
       } else if (distanceRight >= distanceLeft) {
-          turnRightToAngle(45);
+          switch (random(3)) {
+              case 0: turnRightToAngle(45);
+                break;
+              case 1: turnRightToAngle(60);
+                break;
+              case 2: turnRightToAngle(90);
+                break;
+              case 3: turnOverRight();
+                break;
+              default:
+                break;
+          }
       } else if (distanceLeft >= distanceRight) {
-          turnLeftToAngle(45);
+          switch (random(3)) {
+              case 0: turnLeftToAngle(45);
+                break;
+              case 1: turnLeftToAngle(60);
+                break;
+              case 2: turnLeftToAngle(90);
+                break;
+              case 3: turnOverLeft();
+                break;
+              default:
+                break;
+          }
       }
 
 
@@ -114,12 +138,17 @@ void resetServoShaft() {
 
 unsigned int readDistanceByAngle(unsigned int angle) {
   servo_motor.write(angle);
+
+  digitalWrite(LED_BUILTIN, HIGH);
   delay(sonar_delay);
+  digitalWrite(LED_BUILTIN, LOW);
+  
   return readDistanceAhead();
 }
 
 unsigned int readDistanceAhead() {
   delay(50);
+
   unsigned int cm = sonar.ping_cm();
   if (cm == 0) {
     cm = maximum_distance;

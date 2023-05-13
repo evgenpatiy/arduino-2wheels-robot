@@ -32,7 +32,8 @@ const char *robot_name = { "B1sh0p" };
 const float robot_software_version = 0.02;
 
 boolean isMoveForward = false;
-int distance = 100;
+
+unsigned int distance = 100;
 const unsigned int critical_distance = 20;
 
 const unsigned long full_turnover_time = 1000UL;
@@ -52,6 +53,7 @@ void initSerialConsole() {
 
 void setup() {
   initSerialConsole();
+  randomSeed(analogRead(0));  // init random numbers generator
 
   // init Arduino built-in LED
   pinMode(LED_BUILTIN, OUTPUT);
@@ -62,7 +64,7 @@ void setup() {
   pinMode(LeftMotorBackward, OUTPUT);
   pinMode(RightMotorBackward, OUTPUT);
 
-  servo_motor.attach(servo_pin);  //Пин подключения сервомотора
+  servo_motor.attach(servo_pin);  // servo pin
   resetServoShaft();
   delay(1000);
 
@@ -97,7 +99,7 @@ void loop() {
             turnOverLeft();
             break;
           case 1:
-            turnOverLeft();
+            turnOverRight();
             break;
           default:
             break;
@@ -160,7 +162,7 @@ unsigned int readDistanceByAngle(unsigned int angle) {
 }
 
 unsigned int readDistanceAhead() {
-  delay(50);
+  //delay(50);
 
   unsigned int cm = sonar.ping_cm();
   if (cm == 0) {

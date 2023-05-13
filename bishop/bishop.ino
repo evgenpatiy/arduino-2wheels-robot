@@ -1,53 +1,54 @@
-
 #include <Servo.h>    // servo-control library (out of the box)
 #include <NewPing.h>  // sonar-control library, external
 
 // motors controller L298N connection pins
-const byte LeftMotorForward = 7;
-const byte LeftMotorBackward = 6;
-const byte RightMotorForward = 5;
-const byte RightMotorBackward = 4;
+#define LEFT_MOTOR_FORWARD 7
+#define LEFT_MOTOR_BACKWARD 6
+#define RIGHT_MOTOR_FORWARD 5
+#define RIGHT_MOTOR_BACKWARD 4
 
 // servo connection pin
-const byte servo_pin = 8;
+#define SERVO_MOTOR_PIN 8
 
 // sonar HC-SR04 connection pins
-#define trig_pin A0  // analog input 1
-#define echo_pin A1  // analog input 2
+#define SONAR_TRIG_PIN A0  // analog input 1
+#define SONAR_ECHO_PIN A1  // analog input 2
 
-#define maximum_distance 300
-#define serial_port_speed 9600
+#define MAXIMUM_DISTANCE 300
+#define CRITICAL_DISTANCE 20
 
-#define default_servo_angle 110
-#define edge_servo_right_angle 50
-#define edge_servo_left_angle 170
+#define DEFAULT_SERVO_POSITION 110
+#define EDGE_SERVO_RIGHT_POSITION 50
+#define EDGE_SERVO_LEFT_POSITION 170
 
+#define DEFAULT_SERVO_ANGLE 0
+#define EDGE_SERVO_RIGHT_ANGLE 90
+#define EDGE_SERVO_LEFT_ANGLE -90
+
+#define RUN_LOOP true
+
+#define SERIAL_PORT_SPEED 9600
 #define DEBUG true
 #define Serial \
   if (DEBUG) Serial
 
-#define RUN_LOOP true
+#define MAIN_LOOP_DELAY 50UL
+#define FULL_TURNOVER_TIME 1000UL
+#define SONAR_DELAY 200UL
 
-const char *robot_name = { "B1sh0p" };
-const float robot_software_version = 0.02;
+const char *ROBOT_NAME = { "B1sh0p" };
+const float ROBOT_SOFTWARE_VERSION = 0.02;
 
 boolean isMoveForward = false;
-
 unsigned int distance = 100;
-const unsigned int critical_distance = 20;
 
-const unsigned long full_turnover_time = 1000UL;
-const unsigned long sonar_delay = 200UL;
-
-#define main_loop_delay 50UL
-
-NewPing sonar(trig_pin, echo_pin, maximum_distance);  //sensor function
-Servo servo_motor;                                    //our servo name
+NewPing sonar(SONAR_TRIG_PIN, SONAR_ECHO_PIN, MAXIMUM_DISTANCE);  //sensor function
+Servo servo_motor;                                                //our servo name
 
 void initSerialConsole() {
-  Serial.begin(serial_port_speed);
-  Serial.println("--- this is " + (String)robot_name + " version " + (String)robot_software_version);
-  Serial.println("--- init serial console... speed: " + (String)serial_port_speed);
+  Serial.begin(SERIAL_PORT_SPEED);
+  Serial.println("--- this is " + (String)ROBOT_NAME + " version " + (String)ROBOT_SOFTWARE_VERSION);
+  Serial.println("--- init serial console... speed: " + (String)SERIAL_PORT_SPEED);
   Serial.println();
 }
 
@@ -59,41 +60,41 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 
   // init engines control
-  pinMode(RightMotorForward, OUTPUT);
-  pinMode(LeftMotorForward, OUTPUT);
-  pinMode(LeftMotorBackward, OUTPUT);
-  pinMode(RightMotorBackward, OUTPUT);
+  pinMode(RIGHT_MOTOR_FORWARD, OUTPUT);
+  pinMode(LEFT_MOTOR_FORWARD, OUTPUT);
+  pinMode(LEFT_MOTOR_BACKWARD, OUTPUT);
+  pinMode(RIGHT_MOTOR_BACKWARD, OUTPUT);
 
-  servo_motor.attach(servo_pin);  // servo pin
+  servo_motor.attach(SERVO_MOTOR_PIN);  // servo pin
   resetServoShaft();
   delay(1000);
 
   // check is servo ok
-  readDistanceByAngle(edge_servo_left_angle);
+  readDistanceByAngle(EDGE_SERVO_LEFT_POSITION);
   resetServoShaft();
 
-  readDistanceByAngle(edge_servo_right_angle);
+  readDistanceByAngle(EDGE_SERVO_RIGHT_POSITION);
   resetServoShaft();
   Serial.println("--- servo ok...");
 }
 
 void loop() {
   if (RUN_LOOP) {
-    delay(main_loop_delay);
+    delay(MAIN_LOOP_DELAY);
     distance = readDistanceAhead();
 
-    if (distance <= critical_distance) {
+    if (distance <= CRITICAL_DISTANCE) {
       stop();
       moveBackward(400);
 
-      int distanceRight = readDistanceByAngle(edge_servo_right_angle);
+      int distanceRight = readDistanceByAngle(EDGE_SERVO_RIGHT_POSITION);
       resetServoShaft();
-      int distanceLeft = readDistanceByAngle(edge_servo_left_angle);
+      int distanceLeft = readDistanceByAngle(EDGE_SERVO_LEFT_POSITION);
       resetServoShaft();
 
       Serial.println("***SONAR: distance ahead: " + (String)distance + " distance <<left: " + (String)distanceLeft + " distance right>>: " + (String)distanceRight);
 
-      if (distanceRight <= critical_distance && distanceLeft <= critical_distance) {
+      if (distanceRight <= CRITICAL_DISTANCE && distanceLeft <= CRITICAL_DISTANCE) {
         switch (random(0, 2)) {
           case 0:
             turnOverLeft();
@@ -148,34 +149,32 @@ void loop() {
 }
 
 void resetServoShaft() {
-  servo_motor.write(default_servo_angle);
+  servo_motor.write(DEFAULT_SERVO_POSITION);
 }
 
 unsigned int readDistanceByAngle(unsigned int angle) {
   servo_motor.write(angle);
 
   digitalWrite(LED_BUILTIN, HIGH);
-  delay(sonar_delay);
+  delay(SONAR_DELAY);
   digitalWrite(LED_BUILTIN, LOW);
 
   return readDistanceAhead();
 }
 
 unsigned int readDistanceAhead() {
-  //delay(50);
-
   unsigned int cm = sonar.ping_cm();
   if (cm == 0) {
-    cm = maximum_distance;
+    cm = MAXIMUM_DISTANCE;
   }
   return cm;
 }
 
 void stop() {
-  digitalWrite(RightMotorForward, LOW);
-  digitalWrite(LeftMotorForward, LOW);
-  digitalWrite(RightMotorBackward, LOW);
-  digitalWrite(LeftMotorBackward, LOW);
+  digitalWrite(RIGHT_MOTOR_FORWARD, LOW);
+  digitalWrite(LEFT_MOTOR_FORWARD, LOW);
+  digitalWrite(RIGHT_MOTOR_BACKWARD, LOW);
+  digitalWrite(LEFT_MOTOR_BACKWARD, LOW);
 }
 
 void moveForward(unsigned int time) {
@@ -184,11 +183,11 @@ void moveForward(unsigned int time) {
 
     isMoveForward = true;
 
-    digitalWrite(LeftMotorForward, HIGH);
-    digitalWrite(RightMotorForward, HIGH);
+    digitalWrite(LEFT_MOTOR_FORWARD, HIGH);
+    digitalWrite(RIGHT_MOTOR_FORWARD, HIGH);
 
-    digitalWrite(LeftMotorBackward, LOW);
-    digitalWrite(RightMotorBackward, LOW);
+    digitalWrite(LEFT_MOTOR_BACKWARD, LOW);
+    digitalWrite(RIGHT_MOTOR_BACKWARD, LOW);
 
     execute(time);
   }
@@ -198,38 +197,38 @@ void moveBackward(unsigned int time) {
 
   isMoveForward = false;
 
-  digitalWrite(LeftMotorBackward, HIGH);
-  digitalWrite(RightMotorBackward, HIGH);
+  digitalWrite(LEFT_MOTOR_BACKWARD, HIGH);
+  digitalWrite(RIGHT_MOTOR_BACKWARD, HIGH);
 
-  digitalWrite(LeftMotorForward, LOW);
-  digitalWrite(RightMotorForward, LOW);
+  digitalWrite(LEFT_MOTOR_FORWARD, LOW);
+  digitalWrite(RIGHT_MOTOR_FORWARD, LOW);
 
   execute(time);
 }
 
 void turnLeft(unsigned int time) {
-  digitalWrite(LeftMotorBackward, HIGH);
-  digitalWrite(RightMotorForward, HIGH);
+  digitalWrite(LEFT_MOTOR_BACKWARD, HIGH);
+  digitalWrite(RIGHT_MOTOR_FORWARD, HIGH);
 
-  digitalWrite(LeftMotorForward, LOW);
-  digitalWrite(RightMotorBackward, LOW);
+  digitalWrite(LEFT_MOTOR_FORWARD, LOW);
+  digitalWrite(RIGHT_MOTOR_BACKWARD, LOW);
 
   execute(time);
 }
 
 void turnRight(unsigned int time) {
 
-  digitalWrite(LeftMotorForward, HIGH);
-  digitalWrite(RightMotorBackward, HIGH);
+  digitalWrite(LEFT_MOTOR_FORWARD, HIGH);
+  digitalWrite(RIGHT_MOTOR_BACKWARD, HIGH);
 
-  digitalWrite(LeftMotorBackward, LOW);
-  digitalWrite(RightMotorForward, LOW);
+  digitalWrite(LEFT_MOTOR_BACKWARD, LOW);
+  digitalWrite(RIGHT_MOTOR_FORWARD, LOW);
 
   execute(time);
 }
 
 unsigned long getAngleTurnTime(unsigned int angle) {
-  return ((float)angle * float(full_turnover_time)) / 180.0;
+  return ((float)angle * float(FULL_TURNOVER_TIME)) / 180.0;
 }
 
 void turnLeftToAngle(unsigned int angle) {
@@ -241,11 +240,11 @@ void turnRightToAngle(unsigned int angle) {
 }
 
 void turnOverLeft() {
-  turnLeft(full_turnover_time);
+  turnLeft(FULL_TURNOVER_TIME);
 }
 
 void turnOverRight() {
-  turnRight(full_turnover_time);
+  turnRight(FULL_TURNOVER_TIME);
 }
 
 void execute(unsigned int time) {

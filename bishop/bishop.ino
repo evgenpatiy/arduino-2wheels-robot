@@ -8,7 +8,7 @@
 #define RIGHT_MOTOR_BACKWARD 4
 
 // servo connection pin
-#define SERVO_MOTOR_PIN 8
+#define SERVO_MOTOR_PIN 12
 
 // sonar HC-SR04 connection pins
 #define SONAR_TRIG_PIN A0  // analog input 1
@@ -76,6 +76,7 @@ void setup() {
   readDistanceByAngle(EDGE_SERVO_RIGHT_POSITION);
   resetServoShaft();
   Serial.println("--- servo ok...");
+  delay(2000);
 }
 
 void loop() {

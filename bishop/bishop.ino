@@ -42,6 +42,25 @@ const float ROBOT_SOFTWARE_VERSION = 0.02;
 boolean isMoveForward = false;
 unsigned int distance = 100;
 
+struct LedColor {
+  byte rLevel;
+  byte gLevel;
+  byte bLevel;
+};
+
+LedColor red = { 255, 0, 0 }; 
+LedColor green = { 0, 255, 0 }; 
+LedColor blue = { 0, 0, 255 }; 
+
+struct LedLight {
+  byte r;
+  byte g;
+  byte b;
+};
+
+LedLight leftLight = { 9, 10, 11 };
+LedLight rightLight = { 0, 1, 2 };
+
 NewPing sonar(SONAR_TRIG_PIN, SONAR_ECHO_PIN, MAXIMUM_DISTANCE);  //sensor function
 Servo servo_motor;                                                //our servo name
 
@@ -52,7 +71,34 @@ void initSerialConsole() {
   Serial.println();
 }
 
+void initLED(LedLight light) {
+  pinMode(light.r, OUTPUT);
+  pinMode(light.g, OUTPUT);
+  pinMode(light.b, OUTPUT);
+}
+
+void lightOn(LedLight light, LedColor color) {
+  analogWrite(light.r, color.rLevel);
+  analogWrite(light.g, color.gLevel);
+  analogWrite(light.b, color.bLevel);
+}
+
+void lightOff(LedLight light) {
+  digitalWrite(light.r, LOW);
+  digitalWrite(light.g, LOW);
+  digitalWrite(light.b, LOW);
+}
+
+void checkLight() {
+  lightOn(leftLight, red);
+  lightOn(rightLight, green);
+}
+
 void setup() {
+  initLED(leftLight);
+  initLED(rightLight);
+  checkLight();
+
   initSerialConsole();
   randomSeed(analogRead(0));  // init random numbers generator
 
